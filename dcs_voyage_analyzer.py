@@ -117,7 +117,7 @@ st.subheader("📊 Performance & Financial Dashboard")
 # Row 1: Financial KPIs
 f1, f2, f3 = st.columns(3)
 f1.metric("Total Fuel Cost ($)", f"${act_total_cost:,.2f}", f"${act_total_cost - est_total_cost:+,.2f}", delta_color="inverse")
-f2.set_zone = f2.metric("FO Total Cost ($)", f"${act_fo_cost:,.2f}", f"${act_fo_cost - est_fo_cost:+,.2f}", delta_color="inverse")
+f2.metric("FO Total Cost ($)", f"${act_fo_cost:,.2f}", f"${act_fo_cost - est_fo_cost:+,.2f}", delta_color="inverse")
 f3.metric("DO Total Cost ($)", f"${act_do_cost:,.2f}", f"${act_do_cost - est_do_cost:+,.2f}", delta_color="inverse")
 
 st.markdown("<br>", unsafe_allow_html=True)
@@ -195,7 +195,7 @@ def generate_voyage_pdf():
         if is_currency:
             est_str = f"${est:,.2f}"
             act_str = f"${act:,.2f}"
-            diff_str = f"${diff:+,2f}"
+            diff_str = f"${diff:+,.2f}" # HATANIN DÜZELTİLDİĞİ YER (Nokta eklendi)
         else:
             est_str = f"{est:,.1f} {unit}"
             act_str = f"{act:,.1f} {unit}"
@@ -222,7 +222,7 @@ def generate_voyage_pdf():
     add_row("Total DO Cons", est_tot_do, act_tot_do, "MT")
     pdf.ln(10)
     
-    # 4. EXACT Dashboard Charts via Matplotlib (No Cloud Dependency / No Error 42)
+    # 4. EXACT Dashboard Charts via Matplotlib
     pdf.set_font("Helvetica", "B", 14)
     pdf.cell(190, 10, "Visual Performance & Cost Charts", ln=True)
     pdf.ln(5)

@@ -9,7 +9,6 @@ import os
 st.set_page_config(page_title="Spark Voyage Analyzer", layout="wide", page_icon="📈")
 
 # --- 2. SIDEBAR: VESSEL INFO ---
-st.sidebar.image("", use_container_width=True)
 st.sidebar.header("🚢 Vessel & Voyage Info")
 vessel_name = st.sidebar.text_input("Vessel Name", "M/V Beks")
 voyage_num = st.sidebar.text_input("Voyage Number", "Voy-2026-05")

@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+import numpy as np
 from fpdf import FPDF
 import tempfile
 import os
@@ -112,7 +114,7 @@ m8.metric("Sea Days", f"{act_sea_days:.1f}", f"{act_sea_days - est_sea_days:+.1f
 m9.metric("Work Days", f"{act_work_days:.1f}", f"{act_work_days - est_work_days:+.1f} Days", delta_color="inverse")
 m10.metric("Idle Days", f"{act_idle_days:.1f}", f"{act_idle_days - est_idle_days:+.1f} Days", delta_color="inverse")
 
-# Row 2: Charts
+# Row 2: Charts (Plotly for Web View)
 c1, c2 = st.columns(2)
 
 with c1:
@@ -187,27 +189,58 @@ def generate_voyage_pdf():
     add_row("DO Idle Cons", est_do_idle, act_do_idle, "MT")
     pdf.ln(10)
     
-    # 4. EXACT Dashboard Charts in PDF
+    # 4. EXACT Dashboard Charts via Matplotlib (No Cloud Dependency / No Error 42)
     pdf.set_font("Helvetica", "B", 14)
     pdf.cell(190, 10, "Visual Performance Charts", ln=True)
     pdf.ln(5)
     
     try:
         tmp_dir = tempfile.gettempdir()
-        fuel_img_path = os.path.join(tmp_dir, "fuel_chart.png")
-        time_img_path = os.path.join(tmp_dir, "time_chart.png")
+        fuel_img_path = os.path.join(tmp_dir, "fuel_chart_mp.png")
+        time_img_path = os.path.join(tmp_dir, "time_chart_mp.png")
         
-        # Grafiklerin PDF icinde net gorunmesi icin beyaz temaya cevrilmesi
-        fig_fuel_pdf = go.Figure(fig_fuel)
-        fig_fuel_pdf.update_layout(template='plotly_white', title_font_color='black', font_color='black')
+        # --- Create Fuel Chart with Matplotlib ---
+        labels_fuel = ['Total FO', 'FO Sea', 'FO Work', 'FO Idle', 'Total DO', 'DO Sea', 'DO Work', 'DO Idle']
+        est_fuel_vals = [est_tot_fo, est_fo_sea, est_fo_work, est_fo_idle, est_tot_do, est_do_sea, est_do_work, est_do_idle]
+        act_fuel_vals = [act_tot_fo, act_fo_sea, act_fo_work, act_fo_idle, act_tot_do, act_do_sea, act_do_work, act_do_idle]
         
-        fig_time_pdf = go.Figure(fig_time)
-        fig_time_pdf.update_layout(template='plotly_white', title_font_color='black', font_color='black')
+        x_fuel = np.arange(len(labels_fuel))
+        width = 0.35
         
-        # PNG Olarak Kaydet (Kaleido kütüphanesini gerektirir)
-        fig_fuel_pdf.write_image(fuel_img_path, width=800, height=400)
-        fig_time_pdf.write_image(time_img_path, width=800, height=400)
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.bar(x_fuel - width/2, est_fuel_vals, width, label='Estimated', color='#1f77b4')
+        ax.bar(x_fuel + width/2, act_fuel_vals, width, label='Actual', color='#d62728')
         
+        ax.set_ylabel('Consumption (MT)')
+        ax.set_title('Fuel Consumption Breakdown (MT)')
+        ax.set_xticks(x_fuel)
+        ax.set_xticklabels(labels_fuel)
+        ax.legend()
+        plt.tight_layout()
+        plt.savefig(fuel_img_path, format='png', dpi=150)
+        plt.close(fig)
+        
+        # --- Create Time Chart with Matplotlib ---
+        labels_time = ['Total Days', 'Sea Days', 'Work Days', 'Idle Days']
+        est_time_vals = [est_tot_days, est_sea_days, est_work_days, est_idle_days]
+        act_time_vals = [act_tot_days, act_sea_days, act_work_days, act_idle_days]
+        
+        x_time = np.arange(len(labels_time))
+        
+        fig2, ax2 = plt.subplots(figsize=(10, 5))
+        ax2.bar(x_time - width/2, est_time_vals, width, label='Estimated', color='#2ca02c')
+        ax2.bar(x_time + width/2, act_time_vals, width, label='Actual', color='#ff7f0e')
+        
+        ax2.set_ylabel('Duration (Days)')
+        ax2.set_title('Time & Duration Breakdown (Days)')
+        ax2.set_xticks(x_time)
+        ax2.set_xticklabels(labels_time)
+        ax2.legend()
+        plt.tight_layout()
+        plt.savefig(time_img_path, format='png', dpi=150)
+        plt.close(fig2)
+        
+        # Add generated chart images safely into PDF layout
         current_y = pdf.get_y()
         pdf.image(fuel_img_path, x=10, y=current_y, w=190)
         
@@ -217,10 +250,10 @@ def generate_voyage_pdf():
     except Exception as e:
         pdf.set_font("Helvetica", "B", 12)
         pdf.set_text_color(255, 0, 0)
-        pdf.cell(190, 10, "KALEIDO KUTUPHANESI EKSIK!", ln=True)
+        pdf.cell(190, 10, "GRAFIK OLUSTURMA HATASI!", ln=True)
         pdf.set_text_color(0, 0, 0)
         pdf.set_font("Helvetica", "", 10)
-        pdf.multi_cell(190, 8, "Lutfen Streamlit uzerindeki 'requirements.txt' dosyaniza 'kaleido==0.1.0post1' ekleyin. Aksi takdirde dashboard grafikleri PDF icine basilemez.")
+        pdf.multi_cell(190, 8, f"Hata detayi: {str(e)}")
 
     pdf.ln(10)
     pdf.set_font("Helvetica", "I", 8)

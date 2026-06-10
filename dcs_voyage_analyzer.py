@@ -39,6 +39,7 @@ with col_est:
     est_lad_spd = st.number_input("Laden Speed (Knot) [Est]", value=11.5, step=0.5)
     
     st.markdown("#### 3. Time (Days)")
+    est_tot_days = st.number_input("Total Voyage Days [Est]", value=15.0, step=0.5)
     est_work_days = st.number_input("Work Days (Days) [Est]", value=4.0, step=0.5)
     est_idle_days = st.number_input("Idle Days (Days) [Est]", value=1.0, step=0.5)
     
@@ -65,6 +66,7 @@ with col_act:
     act_lad_spd = st.number_input("Laden Speed (Knot) [Act]", value=11.0, step=0.5)
     
     st.markdown("#### 3. Time (Days)")
+    act_tot_days = st.number_input("Total Voyage Days [Act]", value=16.5, step=0.5)
     act_work_days = st.number_input("Work Days (Days) [Act]", value=4.5, step=0.5)
     act_idle_days = st.number_input("Idle Days (Days) [Act]", value=2.0, step=0.5)
     
@@ -80,15 +82,13 @@ with col_act:
 # --- 5. AUTOMATIC CALCULATIONS ---
 # Estimated Calculations
 est_tot_dist = est_bal_dist + est_lad_dist
-est_sea_days = (est_bal_dist / (est_bal_spd * 24) if est_bal_spd > 0 else 0) + (est_lad_dist / (est_lad_spd * 24) if est_lad_spd > 0 else 0)
-est_tot_days = est_sea_days + est_work_days + est_idle_days
+est_sea_days = max(0.0, est_tot_days - est_work_days - est_idle_days)
 est_tot_fo = est_fo_sea + est_fo_work + est_fo_idle
 est_tot_do = est_do_sea + est_do_work + est_do_idle
 
 # Actual Calculations
 act_tot_dist = act_bal_dist + act_lad_dist
-act_sea_days = (act_bal_dist / (act_bal_spd * 24) if act_bal_spd > 0 else 0) + (act_lad_dist / (act_lad_spd * 24) if act_lad_spd > 0 else 0)
-act_tot_days = act_sea_days + act_work_days + act_idle_days
+act_sea_days = max(0.0, act_tot_days - act_work_days - act_idle_days)
 act_tot_fo = act_fo_sea + act_fo_work + act_fo_idle
 act_tot_do = act_do_sea + act_do_work + act_do_idle
 
@@ -151,7 +151,6 @@ def generate_voyage_pdf():
     pdf.cell(190, 8, f"Voyage Number: {voyage_num}", ln=True)
     pdf.cell(190, 8, f"Fleet: {fleet_name}", ln=True)
     
-    # Get current Y to draw line dynamically
     current_y = pdf.get_y() + 2
     pdf.line(10, current_y, 200, current_y)
     pdf.set_y(current_y + 5)
@@ -176,6 +175,7 @@ def generate_voyage_pdf():
     add_row("Weather Factor", est_weather, act_weather, "%")
     add_row("Cargo Quantity", est_cargo, act_cargo, "MT")
     add_row("Total Distance", est_tot_dist, act_tot_dist, "NM")
+    add_row("Total Voyage Days", est_tot_days, act_tot_days, "Days")
     add_row("Sea Days", est_sea_days, act_sea_days, "Days")
     add_row("Work Days", est_work_days, act_work_days, "Days")
     add_row("Idle Days", est_idle_days, act_idle_days, "Days")
@@ -187,82 +187,45 @@ def generate_voyage_pdf():
     add_row("DO Idle Cons", est_do_idle, act_do_idle, "MT")
     pdf.ln(10)
     
-    # 4. Dashboard Charts
+    # 4. EXACT Dashboard Charts in PDF
     pdf.set_font("Helvetica", "B", 14)
     pdf.cell(190, 10, "Visual Performance Charts", ln=True)
     pdf.ln(5)
     
     try:
-        # Dashboarddaki grafikleri aynen PDF'e aktarma (Kaleido gerektirir)
         tmp_dir = tempfile.gettempdir()
         fuel_img_path = os.path.join(tmp_dir, "fuel_chart.png")
         time_img_path = os.path.join(tmp_dir, "time_chart.png")
         
-        # Renk temasını PDF'e uygun (beyaz arka plan) yapmak için güncelleme
+        # Grafiklerin PDF icinde net gorunmesi icin beyaz temaya cevrilmesi
         fig_fuel_pdf = go.Figure(fig_fuel)
         fig_fuel_pdf.update_layout(template='plotly_white', title_font_color='black', font_color='black')
         
         fig_time_pdf = go.Figure(fig_time)
         fig_time_pdf.update_layout(template='plotly_white', title_font_color='black', font_color='black')
         
+        # PNG Olarak Kaydet (Kaleido kütüphanesini gerektirir)
         fig_fuel_pdf.write_image(fuel_img_path, width=800, height=400)
         fig_time_pdf.write_image(time_img_path, width=800, height=400)
         
         current_y = pdf.get_y()
         pdf.image(fuel_img_path, x=10, y=current_y, w=190)
         
-        # Ikinci grafik icin yeni sayfa
         pdf.add_page()
         pdf.image(time_img_path, x=10, y=20, w=190)
-        pdf.set_y(120)
         
     except Exception as e:
-        # Kaleido yoksa ust uste binmeyi onleyen dinamik Y eksenli native cizimler
-        def draw_bar_chart(title, val_est, val_act, unit):
-            pdf.set_font("Helvetica", "B", 10)
-            y_pos = pdf.get_y()
-            
-            # Sayfa sonuna geldiysek yeni sayfa ac
-            if y_pos > 250:
-                pdf.add_page()
-                y_pos = pdf.get_y()
-                
-            pdf.cell(190, 6, title, ln=True)
-            
-            max_val = max(val_est, val_act) * 1.2
-            if max_val == 0: max_val = 1
-            
-            width_est = (val_est / max_val) * 120
-            width_act = (val_act / max_val) * 120
-            
-            # Estimated Bar (Blue)
-            pdf.set_fill_color(31, 119, 180)
-            pdf.rect(40, y_pos + 8, width_est, 6, 'F')
-            pdf.set_xy(10, y_pos + 8)
-            pdf.set_font("Helvetica", "", 9)
-            pdf.cell(30, 6, "Estimated:", 0, 0)
-            pdf.set_xy(42 + width_est, y_pos + 8)
-            pdf.cell(30, 6, f"{val_est:.1f} {unit}")
-            
-            # Actual Bar (Red)
-            pdf.set_fill_color(214, 39, 40)
-            pdf.rect(40, y_pos + 16, width_act, 6, 'F')
-            pdf.set_xy(10, y_pos + 16)
-            pdf.cell(30, 6, "Actual:", 0, 0)
-            pdf.set_xy(42 + width_act, y_pos + 16)
-            pdf.cell(30, 6, f"{val_act:.1f} {unit}")
-            
-            pdf.set_y(y_pos + 30) # Bir sonraki cizim icin aralik birak
-            
-        draw_bar_chart("Total Fuel Oil (FO) Consumption", est_tot_fo, act_tot_fo, "MT")
-        draw_bar_chart("Total Diesel Oil (DO) Consumption", est_tot_do, act_tot_do, "MT")
-        draw_bar_chart("Total Voyage Duration", est_tot_days, act_tot_days, "Days")
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.set_text_color(255, 0, 0)
+        pdf.cell(190, 10, "KALEIDO KUTUPHANESI EKSIK!", ln=True)
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_font("Helvetica", "", 10)
+        pdf.multi_cell(190, 8, "Lutfen Streamlit uzerindeki 'requirements.txt' dosyaniza 'kaleido==0.1.0post1' ekleyin. Aksi takdirde dashboard grafikleri PDF icine basilemez.")
 
     pdf.ln(10)
     pdf.set_font("Helvetica", "I", 8)
     pdf.cell(190, 5, "* This report is generated electronically by the MarineDeCarb Simulator.", ln=True)
     
-    # Save to temp
     tmp_path = os.path.join(tempfile.gettempdir(), "Voyage_Analyzer_Report.pdf")
     pdf.output(tmp_path)
     with open(tmp_path, "rb") as f:

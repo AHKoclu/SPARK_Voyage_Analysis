@@ -30,7 +30,7 @@ with col_est:
     
     st.markdown("#### 1. Cargo & Weather")
     est_cargo = st.number_input("Cargo Quantity (MT) [Est]", value=55000.0, step=1000.0)
-    est_weather = st.number_input("Weather Factor (Beaufort) [Est]", value=4.0, step=0.5)
+    est_weather = st.number_input("Weather Factor (%) [Est]", value=15.0, step=1.0)
     
     st.markdown("#### 2. Navigation (Dist & Speed)")
     est_bal_dist = st.number_input("Ballast Distance (NM) [Est]", value=1200.0, step=100.0)
@@ -56,7 +56,7 @@ with col_act:
     
     st.markdown("#### 1. Cargo & Weather")
     act_cargo = st.number_input("Cargo Quantity (MT) [Act]", value=54800.0, step=1000.0)
-    act_weather = st.number_input("Weather Factor (Beaufort) [Act]", value=5.5, step=0.5)
+    act_weather = st.number_input("Weather Factor (%) [Act]", value=18.0, step=1.0)
     
     st.markdown("#### 2. Navigation (Dist & Speed)")
     act_bal_dist = st.number_input("Ballast Distance (NM) [Act]", value=1250.0, step=100.0)
@@ -98,7 +98,7 @@ st.subheader("📊 Performance Dashboard")
 
 # Row 1: Key Metrics
 m1, m2, m3, m4, m5 = st.columns(5)
-m1.metric("Weather Factor (BF)", f"{act_weather:.1f}", f"{act_weather - est_weather:+.1f} BF", delta_color="inverse")
+m1.metric("Weather Factor (%)", f"{act_weather:.1f}%", f"{act_weather - est_weather:+.1f}%", delta_color="inverse")
 m2.metric("Total Cargo (MT)", f"{act_cargo:,.0f}", f"{act_cargo - est_cargo:+,.0f} MT", delta_color="normal")
 m3.metric("Total Distance (NM)", f"{act_tot_dist:,.0f}", f"{act_tot_dist - est_tot_dist:+,.0f} NM", delta_color="inverse")
 m4.metric("Total Voyage Days", f"{act_tot_days:.1f}", f"{act_tot_days - est_tot_days:+.1f} Days", delta_color="inverse")
@@ -150,8 +150,11 @@ def generate_voyage_pdf():
     pdf.cell(190, 8, f"Vessel Name: {vessel_name}", ln=True)
     pdf.cell(190, 8, f"Voyage Number: {voyage_num}", ln=True)
     pdf.cell(190, 8, f"Fleet: {fleet_name}", ln=True)
-    pdf.line(10, 40, 200, 40)
-    pdf.ln(8)
+    
+    # Get current Y to draw line dynamically
+    current_y = pdf.get_y() + 2
+    pdf.line(10, current_y, 200, current_y)
+    pdf.set_y(current_y + 5)
     
     # 3. Data Table
     pdf.set_font("Helvetica", "B", 10)
@@ -170,7 +173,7 @@ def generate_voyage_pdf():
         pdf.cell(40, 8, f"{act:.1f} {unit}", 1)
         pdf.cell(30, 8, diff_str, 1, ln=True)
 
-    add_row("Weather Factor", est_weather, act_weather, "BF")
+    add_row("Weather Factor", est_weather, act_weather, "%")
     add_row("Cargo Quantity", est_cargo, act_cargo, "MT")
     add_row("Total Distance", est_tot_dist, act_tot_dist, "NM")
     add_row("Sea Days", est_sea_days, act_sea_days, "Days")
@@ -184,44 +187,78 @@ def generate_voyage_pdf():
     add_row("DO Idle Cons", est_do_idle, act_do_idle, "MT")
     pdf.ln(10)
     
-    # 4. Native PDF Bar Charts
+    # 4. Dashboard Charts
     pdf.set_font("Helvetica", "B", 14)
     pdf.cell(190, 10, "Visual Performance Charts", ln=True)
     pdf.ln(5)
     
-    def draw_bar_chart(title, val_est, val_act, unit, y_pos):
-        pdf.set_font("Helvetica", "B", 10)
-        pdf.set_xy(10, y_pos)
-        pdf.cell(190, 6, title, ln=True)
+    try:
+        # Dashboarddaki grafikleri aynen PDF'e aktarma (Kaleido gerektirir)
+        tmp_dir = tempfile.gettempdir()
+        fuel_img_path = os.path.join(tmp_dir, "fuel_chart.png")
+        time_img_path = os.path.join(tmp_dir, "time_chart.png")
         
-        max_val = max(val_est, val_act) * 1.2
-        if max_val == 0: max_val = 1
+        # Renk temasını PDF'e uygun (beyaz arka plan) yapmak için güncelleme
+        fig_fuel_pdf = go.Figure(fig_fuel)
+        fig_fuel_pdf.update_layout(template='plotly_white', title_font_color='black', font_color='black')
         
-        width_est = (val_est / max_val) * 120
-        width_act = (val_act / max_val) * 120
+        fig_time_pdf = go.Figure(fig_time)
+        fig_time_pdf.update_layout(template='plotly_white', title_font_color='black', font_color='black')
         
-        # Estimated Bar (Blue)
-        pdf.set_fill_color(31, 119, 180)
-        pdf.rect(40, y_pos + 8, width_est, 6, 'F')
-        pdf.set_xy(10, y_pos + 8)
-        pdf.set_font("Helvetica", "", 9)
-        pdf.cell(30, 6, "Estimated:", 0, 0)
-        pdf.set_xy(42 + width_est, y_pos + 8)
-        pdf.cell(30, 6, f"{val_est:.1f} {unit}")
+        fig_fuel_pdf.write_image(fuel_img_path, width=800, height=400)
+        fig_time_pdf.write_image(time_img_path, width=800, height=400)
         
-        # Actual Bar (Red)
-        pdf.set_fill_color(214, 39, 40)
-        pdf.rect(40, y_pos + 16, width_act, 6, 'F')
-        pdf.set_xy(10, y_pos + 16)
-        pdf.cell(30, 6, "Actual:", 0, 0)
-        pdf.set_xy(42 + width_act, y_pos + 16)
-        pdf.cell(30, 6, f"{val_act:.1f} {unit}")
+        current_y = pdf.get_y()
+        pdf.image(fuel_img_path, x=10, y=current_y, w=190)
         
-    draw_bar_chart("Total Fuel Oil (FO) Consumption", est_tot_fo, act_tot_fo, "MT", 175)
-    draw_bar_chart("Total Diesel Oil (DO) Consumption", est_tot_do, act_tot_do, "MT", 205)
-    draw_bar_chart("Total Voyage Duration", est_tot_days, act_tot_days, "Days", 235)
-    
-    pdf.set_xy(10, 270)
+        # Ikinci grafik icin yeni sayfa
+        pdf.add_page()
+        pdf.image(time_img_path, x=10, y=20, w=190)
+        pdf.set_y(120)
+        
+    except Exception as e:
+        # Kaleido yoksa ust uste binmeyi onleyen dinamik Y eksenli native cizimler
+        def draw_bar_chart(title, val_est, val_act, unit):
+            pdf.set_font("Helvetica", "B", 10)
+            y_pos = pdf.get_y()
+            
+            # Sayfa sonuna geldiysek yeni sayfa ac
+            if y_pos > 250:
+                pdf.add_page()
+                y_pos = pdf.get_y()
+                
+            pdf.cell(190, 6, title, ln=True)
+            
+            max_val = max(val_est, val_act) * 1.2
+            if max_val == 0: max_val = 1
+            
+            width_est = (val_est / max_val) * 120
+            width_act = (val_act / max_val) * 120
+            
+            # Estimated Bar (Blue)
+            pdf.set_fill_color(31, 119, 180)
+            pdf.rect(40, y_pos + 8, width_est, 6, 'F')
+            pdf.set_xy(10, y_pos + 8)
+            pdf.set_font("Helvetica", "", 9)
+            pdf.cell(30, 6, "Estimated:", 0, 0)
+            pdf.set_xy(42 + width_est, y_pos + 8)
+            pdf.cell(30, 6, f"{val_est:.1f} {unit}")
+            
+            # Actual Bar (Red)
+            pdf.set_fill_color(214, 39, 40)
+            pdf.rect(40, y_pos + 16, width_act, 6, 'F')
+            pdf.set_xy(10, y_pos + 16)
+            pdf.cell(30, 6, "Actual:", 0, 0)
+            pdf.set_xy(42 + width_act, y_pos + 16)
+            pdf.cell(30, 6, f"{val_act:.1f} {unit}")
+            
+            pdf.set_y(y_pos + 30) # Bir sonraki cizim icin aralik birak
+            
+        draw_bar_chart("Total Fuel Oil (FO) Consumption", est_tot_fo, act_tot_fo, "MT")
+        draw_bar_chart("Total Diesel Oil (DO) Consumption", est_tot_do, act_tot_do, "MT")
+        draw_bar_chart("Total Voyage Duration", est_tot_days, act_tot_days, "Days")
+
+    pdf.ln(10)
     pdf.set_font("Helvetica", "I", 8)
     pdf.cell(190, 5, "* This report is generated electronically by the MarineDeCarb Simulator.", ln=True)
     

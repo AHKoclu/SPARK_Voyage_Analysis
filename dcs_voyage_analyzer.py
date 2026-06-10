@@ -195,7 +195,7 @@ def generate_voyage_pdf():
         if is_currency:
             est_str = f"${est:,.2f}"
             act_str = f"${act:,.2f}"
-            diff_str = f"${diff:+,.2f}" # HATANIN DÜZELTİLDİĞİ YER (Nokta eklendi)
+            diff_str = f"${diff:+,.2f}"
         else:
             est_str = f"{est:,.1f} {unit}"
             act_str = f"{act:,.1f} {unit}"
@@ -204,7 +204,20 @@ def generate_voyage_pdf():
         pdf.cell(50, 8, param, 1)
         pdf.cell(40, 8, est_str, 1)
         pdf.cell(40, 8, act_str, 1)
-        pdf.cell(40, 8, diff_str, 1, ln=True)
+        
+        # Fark (Difference) Hucresini Renklendirme
+        fill = False
+        if diff > 0.001:
+            pdf.set_fill_color(255, 204, 204) # Soft Red
+            pdf.set_text_color(180, 0, 0)     # Dark Red Text
+            fill = True
+        elif diff < -0.001:
+            pdf.set_fill_color(204, 255, 204) # Soft Green
+            pdf.set_text_color(0, 100, 0)     # Dark Green Text
+            fill = True
+            
+        pdf.cell(40, 8, diff_str, 1, ln=True, fill=fill)
+        pdf.set_text_color(0, 0, 0) # Rengi normale (siyaha) dondur
 
     add_row("Total Fuel Cost", est_total_cost, act_total_cost, "", is_currency=True)
     add_row("FO Total Cost", est_fo_cost, act_fo_cost, "", is_currency=True)

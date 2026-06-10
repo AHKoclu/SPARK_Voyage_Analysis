@@ -257,7 +257,7 @@ def generate_voyage_pdf():
 
     pdf.ln(10)
     pdf.set_font("Helvetica", "I", 8)
-    pdf.cell(190, 5, "* This report is generated electronically by the MarineDeCarb Simulator.", ln=True)
+    pdf.cell(190, 5, "* This report is generated electronically by the SPARK Simulator by AHK.", ln=True)
     
     tmp_path = os.path.join(tempfile.gettempdir(), "Voyage_Analyzer_Report.pdf")
     pdf.output(tmp_path)

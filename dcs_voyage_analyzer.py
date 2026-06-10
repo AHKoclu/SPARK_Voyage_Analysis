@@ -126,10 +126,10 @@ st.markdown("<br>", unsafe_allow_html=True)
 # Row 2: Operational KPIs
 m1, m2, m3, m4, m5 = st.columns(5)
 m1.metric("Weather Factor (%)", f"{act_weather:.1f}%", f"{act_weather - est_weather:+.1f}%", delta_color="inverse")
-m2.metric("Total Cargo (MT)", f"{act_cargo:,.0f}", f"{act_cargo - est_cargo:+,.0f} MT", delta_color="normal")
+m2.metric("Total Cargo (MT)", f"{act_cargo:,.0f}", f"{act_cargo - est_cargo:+,.0f} MT", delta_color="inverse")
 m3.metric("Total Distance (NM)", f"{act_tot_dist:,.0f}", f"{act_tot_dist - est_tot_dist:+,.0f} NM", delta_color="inverse")
 m4.metric("Total Voyage Days", f"{act_tot_days:.1f}", f"{act_tot_days - est_tot_days:+.1f} Days", delta_color="inverse")
-m5.metric("Average Speed (Kts)", f"{(act_bal_spd + act_lad_spd)/2:.1f}", f"{((act_bal_spd + act_lad_spd)/2) - ((est_bal_spd + est_lad_spd)/2):+.1f} Kts", delta_color="normal")
+m5.metric("Average Speed (Kts)", f"{(act_bal_spd + act_lad_spd)/2:.1f}", f"{((act_bal_spd + act_lad_spd)/2) - ((est_bal_spd + est_lad_spd)/2):+.1f} Kts", delta_color="inverse")
 
 # Row 3: Charts (Plotly for Web View)
 c1, c2, c3 = st.columns(3)
@@ -331,7 +331,7 @@ def generate_voyage_pdf():
         data = f.read()
     return data
 
-# --- 8. DOWNLOAD BUTTON ---
+# --- 8. DOWNLOAD BUTTON & SIGNATURE ---
 st.sidebar.header("📥 Reporting")
 if st.sidebar.button("📄 Download PDF Report", type="primary"):
     pdf_bytes = generate_voyage_pdf()
@@ -343,3 +343,19 @@ if st.sidebar.button("📄 Download PDF Report", type="primary"):
         mime="application/pdf"
     )
     st.sidebar.success("✅ PDF is ready!")
+
+# --- CAFCAFALİ ENERJİ DEPARTMANI İMZASI ---
+st.sidebar.markdown("<br><br><br><br>", unsafe_allow_html=True)
+st.sidebar.markdown(
+    """
+    <div style='text-align: center; border-top: 1px solid #444; padding-top: 15px;'>
+        <p style='font-family: "Courier New", Courier, monospace; font-size: 14px; font-weight: bold; color: #00ffcc; letter-spacing: 1px; margin-bottom: 2px;'>
+            ⚡ MarineDeCarb Simulator ⚡
+        </p>
+        <p style='font-style: italic; font-size: 13px; color: #888888; font-family: "Georgia", serif;'>
+            developed by Energy Department
+        </p>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)

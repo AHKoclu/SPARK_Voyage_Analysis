@@ -51,13 +51,9 @@ with col_est:
     est_idle_days = st.number_input("Idle Days (Days) [Est]", value=1.0, step=0.5)
     
     st.markdown("#### 5. Fuel Consumptions (MT)")
-    est_fo_sea = st.number_input("FO Sea [Est]", value=350.0, step=10.0)
-    est_fo_work = st.number_input("FO Work [Est]", value=15.0, step=5.0)
-    est_fo_idle = st.number_input("FO Idle [Est]", value=5.0, step=1.0)
+    est_tot_fo = st.number_input("Total FO [Est]", value=370.0, step=10.0)
     
-    est_do_sea = st.number_input("DO Sea [Est]", value=15.0, step=5.0)
-    est_do_work = st.number_input("DO Work [Est]", value=20.0, step=5.0)
-    est_do_idle = st.number_input("DO Idle [Est]", value=5.0, step=1.0)
+    est_tot_do = st.number_input("Total DO [Est]", value=40.0, step=5.0)
 
 with col_act:
     st.markdown("### 🔴 End-of-Voyage Actual")
@@ -82,20 +78,15 @@ with col_act:
     act_idle_days = st.number_input("Idle Days (Days) [Act]", value=2.0, step=0.5)
     
     st.markdown("#### 5. Fuel Consumptions (MT)")
-    act_fo_sea = st.number_input("FO Sea [Act]", value=385.0, step=10.0)
-    act_fo_work = st.number_input("FO Work [Act]", value=18.0, step=5.0)
-    act_fo_idle = st.number_input("FO Idle [Act]", value=11.0, step=1.0)
+    act_tot_fo = st.number_input("Total FO [Act]", value=414.0, step=10.0)
     
-    act_do_sea = st.number_input("DO Sea [Act]", value=16.5, step=5.0)
-    act_do_work = st.number_input("DO Work [Act]", value=22.5, step=5.0)
-    act_do_idle = st.number_input("DO Idle [Act]", value=10.0, step=1.0)
+    act_tot_do = st.number_input("Total DO [Act]", value=49.0, step=5.0)
 
 # --- 5. AUTOMATIC CALCULATIONS & COSTING ---
 # Estimated Calculations & Costs
 est_tot_dist = est_bal_dist + est_lad_dist
 est_sea_days = max(0.0, est_tot_days - est_work_days - est_idle_days)
-est_tot_fo = est_fo_sea + est_fo_work + est_fo_idle
-est_tot_do = est_do_sea + est_do_work + est_do_idle
+
 
 est_fo_cost = est_tot_fo * est_fo_price
 est_do_cost = est_tot_do * est_do_price
@@ -104,8 +95,7 @@ est_total_cost = est_fo_cost + est_do_cost
 # Actual Calculations & Costs
 act_tot_dist = act_bal_dist + act_lad_dist
 act_sea_days = max(0.0, act_tot_days - act_work_days - act_idle_days)
-act_tot_fo = act_fo_sea + act_fo_work + act_fo_idle
-act_tot_do = act_do_sea + act_do_work + act_do_idle
+
 
 act_fo_cost = act_tot_fo * act_fo_price
 act_do_cost = act_tot_do * act_do_price
@@ -126,10 +116,10 @@ st.markdown("<br>", unsafe_allow_html=True)
 # Row 2: Operational KPIs
 m1, m2, m3, m4, m5 = st.columns(5)
 m1.metric("Weather Factor (%)", f"{act_weather:.1f}%", f"{act_weather - est_weather:+.1f}%", delta_color="inverse")
-m2.metric("Total Cargo (MT)", f"{act_cargo:,.0f}", f"{act_cargo - est_cargo:+,.0f} MT", delta_color="inverse")
+m2.metric("Total Cargo (MT)", f"{act_cargo:,.0f}", f"{act_cargo - est_cargo:+,.0f} MT", delta_color="normal")
 m3.metric("Total Distance (NM)", f"{act_tot_dist:,.0f}", f"{act_tot_dist - est_tot_dist:+,.0f} NM", delta_color="inverse")
 m4.metric("Total Voyage Days", f"{act_tot_days:.1f}", f"{act_tot_days - est_tot_days:+.1f} Days", delta_color="inverse")
-m5.metric("Average Speed (Kts)", f"{(act_bal_spd + act_lad_spd)/2:.1f}", f"{((act_bal_spd + act_lad_spd)/2) - ((est_bal_spd + est_lad_spd)/2):+.1f} Kts", delta_color="inverse")
+m5.metric("Average Speed (Kts)", f"{(act_bal_spd + act_lad_spd)/2:.1f}", f"{((act_bal_spd + act_lad_spd)/2) - ((est_bal_spd + est_lad_spd)/2):+.1f} Kts", delta_color="normal")
 
 # Row 3: Charts (Plotly for Web View)
 c1, c2, c3 = st.columns(3)
@@ -144,10 +134,10 @@ with c1:
 
 with c2:
     fig_fuel = go.Figure(data=[
-        go.Bar(name='Estimated', x=['Total FO', 'FO Sea', 'FO Work', 'FO Idle', 'Total DO', 'DO Sea', 'DO Work', 'DO Idle'], 
-               y=[est_tot_fo, est_fo_sea, est_fo_work, est_fo_idle, est_tot_do, est_do_sea, est_do_work, est_do_idle], marker_color='#1f77b4'),
-        go.Bar(name='Actual', x=['Total FO', 'FO Sea', 'FO Work', 'FO Idle', 'Total DO', 'DO Sea', 'DO Work', 'DO Idle'], 
-               y=[act_tot_fo, act_fo_sea, act_fo_work, act_fo_idle, act_tot_do, act_do_sea, act_do_work, act_do_idle], marker_color='#d62728')
+        go.Bar(name='Estimated', x=['Total FO', 'Total DO'], 
+               y=[est_tot_fo, est_tot_do], marker_color='#1f77b4'),
+        go.Bar(name='Actual', x=['Total FO', 'Total DO'], 
+               y=[act_tot_fo, act_tot_do], marker_color='#d62728')
     ])
     fig_fuel.update_layout(title="Fuel Consumption Breakdown (MT)", barmode='group', template='plotly_dark')
     st.plotly_chart(fig_fuel, use_container_width=True)
@@ -268,9 +258,9 @@ def generate_voyage_pdf():
         plt.close(fig0)
         
         # --- Create Fuel Chart ---
-        labels_fuel = ['Total FO', 'FO Sea', 'FO Work', 'FO Idle', 'Total DO', 'DO Sea', 'DO Work', 'DO Idle']
-        est_fuel_vals = [est_tot_fo, est_fo_sea, est_fo_work, est_fo_idle, est_tot_do, est_do_sea, est_do_work, est_do_idle]
-        act_fuel_vals = [act_tot_fo, act_fo_sea, act_fo_work, act_fo_idle, act_tot_do, act_do_sea, act_do_work, act_do_idle]
+        labels_fuel = ['Total FO', 'Total DO']
+        est_fuel_vals = [est_tot_fo, est_tot_do]
+        act_fuel_vals = [act_tot_fo, act_tot_do]
         x_fuel = np.arange(len(labels_fuel))
         
         fig, ax = plt.subplots(figsize=(10, 4))
@@ -349,11 +339,11 @@ st.sidebar.markdown("<br><br><br><br>", unsafe_allow_html=True)
 st.sidebar.markdown(
     """
     <div style='text-align: center; border-top: 1px solid #444; padding-top: 15px;'>
-        <p style='font-family: "Courier New", Courier, monospace; font-size: 14px; font-weight: bold; color: #FF0000; letter-spacing: 1px; margin-bottom: 2px;'>
-            ⚡ Chartering Simulator ⚡
+        <p style='font-family: "Courier New", Courier, monospace; font-size: 14px; font-weight: bold; color: #00ffcc; letter-spacing: 1px; margin-bottom: 2px;'>
+            ⚡ MarineDeCarb Simulator ⚡
         </p>
-        <p style='font-style: italic; font-size: 13px; color: #FF0000; font-family: "Georgia", serif;'>
-            Developed by Energy Department
+        <p style='font-style: italic; font-size: 13px; color: #888888; font-family: "Georgia", serif;'>
+            developed by Energy Department
         </p>
     </div>
     """, 

@@ -336,7 +336,7 @@ st.sidebar.markdown(
     """
     <div style='text-align: center; border-top: 1px solid #444; padding-top: 15px;'>
         <p style='font-family: "Courier New", Courier, monospace; font-size: 14px; font-weight: bold; color: #00ffcc; letter-spacing: 1px; margin-bottom: 2px;'>
-            ⚡ Spark Chartering Simulator ⚡
+            ⚡ Chartering Simulator ⚡
         </p>
         <p style='font-style: italic; font-size: 13px; color: #888888; font-family: "Georgia", serif;'>
             Developed by Energy Department

@@ -339,10 +339,10 @@ st.sidebar.markdown("<br><br><br><br>", unsafe_allow_html=True)
 st.sidebar.markdown(
     """
     <div style='text-align: center; border-top: 1px solid #444; padding-top: 15px;'>
-        <p style='font-family: "Courier New", Courier, monospace; font-size: 14px; font-weight: bold; color: #00ffcc; letter-spacing: 1px; margin-bottom: 2px;'>
-            ⚡ MarineDeCarb Simulator ⚡
+        <p style='font-family: "Courier New", Courier, monospace; font-size: 14px; font-weight: bold; color: #FF0033; letter-spacing: 1px; margin-bottom: 2px;'>
+            ⚡ Spark Simulator ⚡
         </p>
-        <p style='font-style: italic; font-size: 13px; color: #888888; font-family: "Georgia", serif;'>
+        <p style='font-style: italic; font-size: 13px; color: #FF0033; font-family: "Georgia", serif;'>
             developed by Energy Department
         </p>
     </div>

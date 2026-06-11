@@ -46,13 +46,12 @@ with col_est:
     est_lad_spd = st.number_input("Laden Speed (Knot) [Est]", value=11.5, step=0.5)
     
     st.markdown("#### 4. Time (Days)")
-    est_tot_days = st.number_input("Total Voyage Days [Est]", value=15.0, step=0.5)
+    est_sea_days = st.number_input("Sea Days (Days) [Est]", value=10.0, step=0.5)
     est_work_days = st.number_input("Work Days (Days) [Est]", value=4.0, step=0.5)
     est_idle_days = st.number_input("Idle Days (Days) [Est]", value=1.0, step=0.5)
     
     st.markdown("#### 5. Fuel Consumptions (MT)")
     est_tot_fo = st.number_input("Total FO [Est]", value=370.0, step=10.0)
-    
     est_tot_do = st.number_input("Total DO [Est]", value=40.0, step=5.0)
 
 with col_act:
@@ -73,20 +72,18 @@ with col_act:
     act_lad_spd = st.number_input("Laden Speed (Knot) [Act]", value=11.0, step=0.5)
     
     st.markdown("#### 4. Time (Days)")
-    act_tot_days = st.number_input("Total Voyage Days [Act]", value=16.5, step=0.5)
+    act_sea_days = st.number_input("Sea Days (Days) [Act]", value=10.0, step=0.5)
     act_work_days = st.number_input("Work Days (Days) [Act]", value=4.5, step=0.5)
     act_idle_days = st.number_input("Idle Days (Days) [Act]", value=2.0, step=0.5)
     
     st.markdown("#### 5. Fuel Consumptions (MT)")
     act_tot_fo = st.number_input("Total FO [Act]", value=414.0, step=10.0)
-    
     act_tot_do = st.number_input("Total DO [Act]", value=49.0, step=5.0)
 
 # --- 5. AUTOMATIC CALCULATIONS & COSTING ---
 # Estimated Calculations & Costs
 est_tot_dist = est_bal_dist + est_lad_dist
-est_sea_days = max(0.0, est_tot_days - est_work_days - est_idle_days)
-
+est_tot_days = est_sea_days + est_work_days + est_idle_days
 
 est_fo_cost = est_tot_fo * est_fo_price
 est_do_cost = est_tot_do * est_do_price
@@ -94,8 +91,7 @@ est_total_cost = est_fo_cost + est_do_cost
 
 # Actual Calculations & Costs
 act_tot_dist = act_bal_dist + act_lad_dist
-act_sea_days = max(0.0, act_tot_days - act_work_days - act_idle_days)
-
+act_tot_days = act_sea_days + act_work_days + act_idle_days
 
 act_fo_cost = act_tot_fo * act_fo_price
 act_do_cost = act_tot_do * act_do_price
@@ -339,11 +335,11 @@ st.sidebar.markdown("<br><br><br><br>", unsafe_allow_html=True)
 st.sidebar.markdown(
     """
     <div style='text-align: center; border-top: 1px solid #444; padding-top: 15px;'>
-        <p style='font-family: "Courier New", Courier, monospace; font-size: 14px; font-weight: bold; color: #FF0033; letter-spacing: 1px; margin-bottom: 2px;'>
-            ⚡ Spark Simulator ⚡
+        <p style='font-family: "Courier New", Courier, monospace; font-size: 14px; font-weight: bold; color: #00ffcc; letter-spacing: 1px; margin-bottom: 2px;'>
+            ⚡ MarineDeCarb Simulator ⚡
         </p>
-        <p style='font-style: italic; font-size: 13px; color: #FF0033; font-family: "Georgia", serif;'>
-            Developed by Energy Department
+        <p style='font-style: italic; font-size: 13px; color: #888888; font-family: "Georgia", serif;'>
+            developed by Energy Department
         </p>
     </div>
     """, 

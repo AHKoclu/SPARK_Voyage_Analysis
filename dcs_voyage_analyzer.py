@@ -343,7 +343,7 @@ st.sidebar.markdown(
             ⚡ Spark Simulator ⚡
         </p>
         <p style='font-style: italic; font-size: 13px; color: #FF0033; font-family: "Georgia", serif;'>
-            developed by Energy Department
+            Developed by Energy Department
         </p>
     </div>
     """, 

@@ -47,12 +47,18 @@ with col_est:
     
     st.markdown("#### 4. Time (Days)")
     est_sea_days = st.number_input("Sea Days (Days) [Est]", value=10.0, step=0.5)
-    est_work_days = st.number_input("Work Days (Days) [Est]", value=4.0, step=0.5)
-    est_idle_days = st.number_input("Idle Days (Days) [Est]", value=1.0, step=0.5)
+    est_work_days = st.number_input("Work Days (Days) [Est]", value=2.0, step=0.5)
+    est_idle_days = st.number_input("Idle Days (Days) [Est]", value=7.0, step=0.5)
     
-    st.markdown("#### 5. Fuel Consumptions (MT)")
+    st.markdown("#### 5. Total Fuel Consumptions (MT)")
     est_tot_fo = st.number_input("Total FO [Est]", value=370.0, step=10.0)
     est_tot_do = st.number_input("Total DO [Est]", value=40.0, step=5.0)
+
+    st.markdown("#### 6. Efficiency KPI Inputs")
+    est_lad_mt_day = st.number_input("Laden Cons. (MT/Day) [Est]", value=26.0, step=0.5)
+    est_bal_mt_day = st.number_input("Ballast Cons. (MT/Day) [Est]", value=24.0, step=0.5)
+    est_work_fuel = st.number_input("Work Total Cons. (MT) [Est]", value=50.0, step=1.0)
+    est_idle_fuel = st.number_input("Idle Total Cons. (MT) [Est]", value=28.0, step=1.0)
 
 with col_act:
     st.markdown("### 🔴 End-of-Voyage Actual")
@@ -73,12 +79,18 @@ with col_act:
     
     st.markdown("#### 4. Time (Days)")
     act_sea_days = st.number_input("Sea Days (Days) [Act]", value=10.0, step=0.5)
-    act_work_days = st.number_input("Work Days (Days) [Act]", value=4.5, step=0.5)
-    act_idle_days = st.number_input("Idle Days (Days) [Act]", value=2.0, step=0.5)
+    act_work_days = st.number_input("Work Days (Days) [Act]", value=3.0, step=0.5)
+    act_idle_days = st.number_input("Idle Days (Days) [Act]", value=12.0, step=0.5)
     
-    st.markdown("#### 5. Fuel Consumptions (MT)")
+    st.markdown("#### 5. Total Fuel Consumptions (MT)")
     act_tot_fo = st.number_input("Total FO [Act]", value=414.0, step=10.0)
     act_tot_do = st.number_input("Total DO [Act]", value=49.0, step=5.0)
+
+    st.markdown("#### 6. Efficiency KPI Inputs")
+    act_lad_mt_day = st.number_input("Laden Cons. (MT/Day) [Act]", value=22.0, step=0.5)
+    act_bal_mt_day = st.number_input("Ballast Cons. (MT/Day) [Act]", value=20.0, step=0.5)
+    act_work_fuel = st.number_input("Work Total Cons. (MT) [Act]", value=81.0, step=1.0)
+    act_idle_fuel = st.number_input("Idle Total Cons. (MT) [Act]", value=36.0, step=1.0)
 
 # --- 5. AUTOMATIC CALCULATIONS & COSTING ---
 # Estimated Calculations & Costs
@@ -89,6 +101,11 @@ est_fo_cost = est_tot_fo * est_fo_price
 est_do_cost = est_tot_do * est_do_price
 est_total_cost = est_fo_cost + est_do_cost
 
+est_lad_mt_nm = est_lad_mt_day / (est_lad_spd * 24) if est_lad_spd > 0 else 0
+est_bal_mt_nm = est_bal_mt_day / (est_bal_spd * 24) if est_bal_spd > 0 else 0
+est_work_mt_day = est_work_fuel / est_work_days if est_work_days > 0 else 0
+est_idle_mt_day = est_idle_fuel / est_idle_days if est_idle_days > 0 else 0
+
 # Actual Calculations & Costs
 act_tot_dist = act_bal_dist + act_lad_dist
 act_tot_days = act_sea_days + act_work_days + act_idle_days
@@ -96,6 +113,11 @@ act_tot_days = act_sea_days + act_work_days + act_idle_days
 act_fo_cost = act_tot_fo * act_fo_price
 act_do_cost = act_tot_do * act_do_price
 act_total_cost = act_fo_cost + act_do_cost
+
+act_lad_mt_nm = act_lad_mt_day / (act_lad_spd * 24) if act_lad_spd > 0 else 0
+act_bal_mt_nm = act_bal_mt_day / (act_bal_spd * 24) if act_bal_spd > 0 else 0
+act_work_mt_day = act_work_fuel / act_work_days if act_work_days > 0 else 0
+act_idle_mt_day = act_idle_fuel / act_idle_days if act_idle_days > 0 else 0
 
 # --- 6. DASHBOARD & VISUALIZATION ---
 st.divider()
@@ -112,10 +134,18 @@ st.markdown("<br>", unsafe_allow_html=True)
 # Row 2: Operational KPIs
 m1, m2, m3, m4, m5 = st.columns(5)
 m1.metric("Weather Factor (%)", f"{act_weather:.1f}%", f"{act_weather - est_weather:+.1f}%", delta_color="inverse")
-m2.metric("Total Cargo (MT)", f"{act_cargo:,.0f}", f"{act_cargo - est_cargo:+,.0f} MT", delta_color="normal")
+m2.metric("Total Cargo (MT)", f"{act_cargo:,.0f}", f"{act_cargo - est_cargo:+,.0f} MT", delta_color="inverse")
 m3.metric("Total Distance (NM)", f"{act_tot_dist:,.0f}", f"{act_tot_dist - est_tot_dist:+,.0f} NM", delta_color="inverse")
 m4.metric("Total Voyage Days", f"{act_tot_days:.1f}", f"{act_tot_days - est_tot_days:+.1f} Days", delta_color="inverse")
-m5.metric("Average Speed (Kts)", f"{(act_bal_spd + act_lad_spd)/2:.1f}", f"{((act_bal_spd + act_lad_spd)/2) - ((est_bal_spd + est_lad_spd)/2):+.1f} Kts", delta_color="normal")
+m5.metric("Average Speed (Kts)", f"{(act_bal_spd + act_lad_spd)/2:.1f}", f"{((act_bal_spd + act_lad_spd)/2) - ((est_bal_spd + est_lad_spd)/2):+.1f} Kts", delta_color="inverse")
+
+st.markdown("<br>", unsafe_allow_html=True)
+st.subheader("⚙️ Efficiency Metrics (MT/NM & MT/Day)")
+k1, k2, k3, k4 = st.columns(4)
+k1.metric("Laden MT/NM", f"{act_lad_mt_nm:.4f}", f"{act_lad_mt_nm - est_lad_mt_nm:+.4f}", delta_color="inverse")
+k2.metric("Ballast MT/NM", f"{act_bal_mt_nm:.4f}", f"{act_bal_mt_nm - est_bal_mt_nm:+.4f}", delta_color="inverse")
+k3.metric("Work MT/Day", f"{act_work_mt_day:.2f}", f"{act_work_mt_day - est_work_mt_day:+.2f}", delta_color="inverse")
+k4.metric("Idle MT/Day", f"{act_idle_mt_day:.2f}", f"{act_idle_mt_day - est_idle_mt_day:+.2f}", delta_color="inverse")
 
 # Row 3: Charts (Plotly for Web View)
 c1, c2, c3 = st.columns(3)
@@ -148,6 +178,24 @@ with c3:
     fig_time.update_layout(title="Time & Duration Breakdown (Days)", barmode='group', template='plotly_dark')
     st.plotly_chart(fig_time, use_container_width=True)
 
+c4, c5 = st.columns(2)
+
+with c4:
+    fig_eff_sea = go.Figure(data=[
+        go.Bar(name='Estimated', x=['Laden MT/NM', 'Ballast MT/NM'], y=[est_lad_mt_nm, est_bal_mt_nm], marker_color='#17becf'),
+        go.Bar(name='Actual', x=['Laden MT/NM', 'Ballast MT/NM'], y=[act_lad_mt_nm, act_bal_mt_nm], marker_color='#bcbd22')
+    ])
+    fig_eff_sea.update_layout(title="Sea Efficiency (MT/NM)", barmode='group', template='plotly_dark')
+    st.plotly_chart(fig_eff_sea, use_container_width=True)
+
+with c5:
+    fig_eff_port = go.Figure(data=[
+        go.Bar(name='Estimated', x=['Work MT/Day', 'Idle MT/Day'], y=[est_work_mt_day, est_idle_mt_day], marker_color='#17becf'),
+        go.Bar(name='Actual', x=['Work MT/Day', 'Idle MT/Day'], y=[act_work_mt_day, act_idle_mt_day], marker_color='#bcbd22')
+    ])
+    fig_eff_port.update_layout(title="Port Efficiency (MT/Day)", barmode='group', template='plotly_dark')
+    st.plotly_chart(fig_eff_port, use_container_width=True)
+
 # --- 7. PDF REPORT GENERATOR ---
 def generate_voyage_pdf():
     pdf = FPDF()
@@ -177,12 +225,16 @@ def generate_voyage_pdf():
     
     pdf.set_font("Helvetica", "", 10)
     
-    def add_row(param, est, act, unit, is_currency=False):
+    def add_row(param, est, act, unit, is_currency=False, is_precision=False):
         diff = act - est
         if is_currency:
             est_str = f"${est:,.2f}"
             act_str = f"${act:,.2f}"
             diff_str = f"${diff:+,.2f}"
+        elif is_precision:
+            est_str = f"{est:,.4f} {unit}"
+            act_str = f"{act:,.4f} {unit}"
+            diff_str = f"{diff:+.4f} {unit}"
         else:
             est_str = f"{est:,.1f} {unit}"
             act_str = f"{act:,.1f} {unit}"
@@ -194,17 +246,17 @@ def generate_voyage_pdf():
         
         # Fark (Difference) Hucresini Renklendirme
         fill = False
-        if diff > 0.001:
+        if diff > 0.0001:
             pdf.set_fill_color(255, 204, 204) # Soft Red
             pdf.set_text_color(180, 0, 0)     # Dark Red Text
             fill = True
-        elif diff < -0.001:
+        elif diff < -0.0001:
             pdf.set_fill_color(204, 255, 204) # Soft Green
             pdf.set_text_color(0, 100, 0)     # Dark Green Text
             fill = True
             
         pdf.cell(40, 8, diff_str, 1, ln=True, fill=fill)
-        pdf.set_text_color(0, 0, 0) # Rengi normale (siyaha) dondur
+        pdf.set_text_color(0, 0, 0) # Rengi normale dondur
 
     add_row("Total Fuel Cost", est_total_cost, act_total_cost, "", is_currency=True)
     add_row("FO Total Cost", est_fo_cost, act_fo_cost, "", is_currency=True)
@@ -220,6 +272,10 @@ def generate_voyage_pdf():
     add_row("Idle Days", est_idle_days, act_idle_days, "Days")
     add_row("Total FO Cons", est_tot_fo, act_tot_fo, "MT")
     add_row("Total DO Cons", est_tot_do, act_tot_do, "MT")
+    add_row("Laden Efficiency", est_lad_mt_nm, act_lad_mt_nm, "MT/NM", is_precision=True)
+    add_row("Ballast Efficiency", est_bal_mt_nm, act_bal_mt_nm, "MT/NM", is_precision=True)
+    add_row("Work Rate", est_work_mt_day, act_work_mt_day, "MT/Day")
+    add_row("Idle Rate", est_idle_mt_day, act_idle_mt_day, "MT/Day")
     pdf.ln(10)
     
     # 4. EXACT Dashboard Charts via Matplotlib
@@ -232,6 +288,8 @@ def generate_voyage_pdf():
         cost_img_path = os.path.join(tmp_dir, "cost_chart_mp.png")
         fuel_img_path = os.path.join(tmp_dir, "fuel_chart_mp.png")
         time_img_path = os.path.join(tmp_dir, "time_chart_mp.png")
+        eff_sea_img_path = os.path.join(tmp_dir, "eff_sea_chart_mp.png")
+        eff_port_img_path = os.path.join(tmp_dir, "eff_port_chart_mp.png")
         
         width = 0.35
         
@@ -288,6 +346,42 @@ def generate_voyage_pdf():
         plt.tight_layout()
         plt.savefig(time_img_path, format='png', dpi=150)
         plt.close(fig2)
+
+        # --- Create Sea Efficiency Chart ---
+        labels_eff_sea = ['Laden MT/NM', 'Ballast MT/NM']
+        est_eff_sea = [est_lad_mt_nm, est_bal_mt_nm]
+        act_eff_sea = [act_lad_mt_nm, act_bal_mt_nm]
+        x_eff_sea = np.arange(len(labels_eff_sea))
+        
+        fig3, ax3 = plt.subplots(figsize=(10, 4))
+        ax3.bar(x_eff_sea - width/2, est_eff_sea, width, label='Estimated', color='#17becf')
+        ax3.bar(x_eff_sea + width/2, act_eff_sea, width, label='Actual', color='#bcbd22')
+        ax3.set_ylabel('MT / NM')
+        ax3.set_title('Sea Efficiency (MT/NM)')
+        ax3.set_xticks(x_eff_sea)
+        ax3.set_xticklabels(labels_eff_sea)
+        ax3.legend()
+        plt.tight_layout()
+        plt.savefig(eff_sea_img_path, format='png', dpi=150)
+        plt.close(fig3)
+        
+        # --- Create Port Efficiency Chart ---
+        labels_eff_port = ['Work MT/Day', 'Idle MT/Day']
+        est_eff_port = [est_work_mt_day, est_idle_mt_day]
+        act_eff_port = [act_work_mt_day, act_idle_mt_day]
+        x_eff_port = np.arange(len(labels_eff_port))
+        
+        fig4, ax4 = plt.subplots(figsize=(10, 4))
+        ax4.bar(x_eff_port - width/2, est_eff_port, width, label='Estimated', color='#17becf')
+        ax4.bar(x_eff_port + width/2, act_eff_port, width, label='Actual', color='#bcbd22')
+        ax4.set_ylabel('MT / Day')
+        ax4.set_title('Port Efficiency (MT/Day)')
+        ax4.set_xticks(x_eff_port)
+        ax4.set_xticklabels(labels_eff_port)
+        ax4.legend()
+        plt.tight_layout()
+        plt.savefig(eff_port_img_path, format='png', dpi=150)
+        plt.close(fig4)
         
         # Add all generated charts into PDF layout dynamically
         current_y = pdf.get_y()
@@ -295,9 +389,11 @@ def generate_voyage_pdf():
         
         pdf.add_page()
         pdf.image(fuel_img_path, x=10, y=20, w=190)
+        pdf.image(time_img_path, x=10, y=140, w=190)
         
         pdf.add_page()
-        pdf.image(time_img_path, x=10, y=20, w=190)
+        pdf.image(eff_sea_img_path, x=10, y=20, w=190)
+        pdf.image(eff_port_img_path, x=10, y=140, w=190)
         
     except Exception as e:
         pdf.set_font("Helvetica", "B", 12)
@@ -307,7 +403,7 @@ def generate_voyage_pdf():
         pdf.set_font("Helvetica", "", 10)
         pdf.multi_cell(190, 8, f"Details: {str(e)}")
 
-    pdf.set_y(140)
+    pdf.set_y(260)
     pdf.set_font("Helvetica", "I", 8)
     pdf.cell(190, 5, "* This report is generated electronically by the SPARK Performance Simulator.", ln=True)
     
@@ -335,11 +431,11 @@ st.sidebar.markdown("<br><br><br><br>", unsafe_allow_html=True)
 st.sidebar.markdown(
     """
     <div style='text-align: center; border-top: 1px solid #444; padding-top: 15px;'>
-        <p style='font-family: "Courier New", Courier, monospace; font-size: 14px; font-weight: bold; color: #00ffcc; letter-spacing: 1px; margin-bottom: 2px;'>
-            ⚡ Chartering Simulator ⚡
+        <p style='font-family: "Courier New", Courier, monospace; font-size: 14px; font-weight: bold; color: #FF0033; letter-spacing: 1px; margin-bottom: 2px;'>
+            ⚡ MarineDeCarb Simulator ⚡
         </p>
         <p style='font-style: italic; font-size: 13px; color: #888888; font-family: "Georgia", serif;'>
-            Developed by Energy Department
+            developed by Energy Department
         </p>
     </div>
     """, 

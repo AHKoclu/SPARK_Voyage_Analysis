@@ -284,6 +284,7 @@ def generate_voyage_pdf():
     pdf.ln(10)
     
     # 4. EXACT Dashboard Charts via Matplotlib
+    pdf.add_page() # Force new page for charts
     pdf.set_font("Helvetica", "B", 14)
     pdf.cell(190, 10, "Visual Performance & Cost Charts", ln=True)
     pdf.ln(5)
@@ -390,20 +391,19 @@ def generate_voyage_pdf():
         
         # Add all generated charts into PDF layout dynamically
         current_y = pdf.get_y()
-        # If there is not enough space for the first chart, add a new page
-        if current_y > 150:
-            pdf.add_page()
-            current_y = 20
-            
+        
+        # Page 2: Cost and Fuel
         pdf.image(cost_img_path, x=10, y=current_y, w=190)
+        pdf.image(fuel_img_path, x=10, y=current_y + 110, w=190)
         
+        # Page 3: Time and Sea Efficiency
         pdf.add_page()
-        pdf.image(fuel_img_path, x=10, y=20, w=190)
-        pdf.image(time_img_path, x=10, y=140, w=190)
+        pdf.image(time_img_path, x=10, y=20, w=190)
+        pdf.image(eff_sea_img_path, x=10, y=130, w=190)
         
+        # Page 4: Port Efficiency
         pdf.add_page()
-        pdf.image(eff_sea_img_path, x=10, y=20, w=190)
-        pdf.image(eff_port_img_path, x=10, y=140, w=190)
+        pdf.image(eff_port_img_path, x=10, y=20, w=190)
         
     except Exception as e:
         pdf.set_font("Helvetica", "B", 12)

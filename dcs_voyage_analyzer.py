@@ -101,8 +101,8 @@ est_fo_cost = est_tot_fo * est_fo_price
 est_do_cost = est_tot_do * est_do_price
 est_total_cost = est_fo_cost + est_do_cost
 
-est_lad_mt_nm = est_lad_mt_day / (est_lad_spd * 24) if est_lad_spd > 0 else 0
-est_bal_mt_nm = est_bal_mt_day / (est_bal_spd * 24) if est_bal_spd > 0 else 0
+est_lad_mt_nm = est_lad_mt_day / est_lad_spd if est_lad_spd > 0 else 0
+est_bal_mt_nm = est_bal_mt_day / est_bal_spd if est_bal_spd > 0 else 0
 est_work_mt_day = est_work_fuel / est_work_days if est_work_days > 0 else 0
 est_idle_mt_day = est_idle_fuel / est_idle_days if est_idle_days > 0 else 0
 
@@ -114,8 +114,8 @@ act_fo_cost = act_tot_fo * act_fo_price
 act_do_cost = act_tot_do * act_do_price
 act_total_cost = act_fo_cost + act_do_cost
 
-act_lad_mt_nm = act_lad_mt_day / (act_lad_spd * 24) if act_lad_spd > 0 else 0
-act_bal_mt_nm = act_bal_mt_day / (act_bal_spd * 24) if act_bal_spd > 0 else 0
+act_lad_mt_nm = act_lad_mt_day / act_lad_spd if act_lad_spd > 0 else 0
+act_bal_mt_nm = act_bal_mt_day / act_bal_spd if act_bal_spd > 0 else 0
 act_work_mt_day = act_work_fuel / act_work_days if act_work_days > 0 else 0
 act_idle_mt_day = act_idle_fuel / act_idle_days if act_idle_days > 0 else 0
 
@@ -195,6 +195,11 @@ with c5:
     ])
     fig_eff_port.update_layout(title="Port Efficiency (MT/Day)", barmode='group', template='plotly_dark')
     st.plotly_chart(fig_eff_port, use_container_width=True)
+
+# --- ENERGY DEPARTMENT COMMENT SECTION ---
+st.markdown("<br>", unsafe_allow_html=True)
+st.subheader("✍️ Energy Department Comment")
+energy_comment = st.text_area("Enter your analysis and comments here (This will be printed in the PDF report):", height=120)
 
 # --- 7. PDF REPORT GENERATOR ---
 def generate_voyage_pdf():
@@ -385,6 +390,11 @@ def generate_voyage_pdf():
         
         # Add all generated charts into PDF layout dynamically
         current_y = pdf.get_y()
+        # If there is not enough space for the first chart, add a new page
+        if current_y > 150:
+            pdf.add_page()
+            current_y = 20
+            
         pdf.image(cost_img_path, x=10, y=current_y, w=190)
         
         pdf.add_page()
@@ -402,6 +412,30 @@ def generate_voyage_pdf():
         pdf.set_text_color(0, 0, 0)
         pdf.set_font("Helvetica", "", 10)
         pdf.multi_cell(190, 8, f"Details: {str(e)}")
+
+    # --- NEW: ENERGY DEPARTMENT COMMENT IN PDF ---
+    pdf.add_page()
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.cell(190, 10, "Energy Department Analysis Comment", ln=True)
+    pdf.ln(5)
+    pdf.set_font("Helvetica", "", 11)
+    
+    # Turkce karakterleri ingilizceye cevir (PDF cokerse diye guvenlik onlemi)
+    comment_text = energy_comment
+    mapping = {"ç": "c", "Ç": "C", "ğ": "g", "Ğ": "G", "ı": "i", "İ": "I",
+               "ö": "o", "Ö": "O", "ş": "s", "Ş": "S", "ü": "u", "Ü": "U",
+               "’": "'", "‘": "'", "”": "\"", "“": "\"", "–": "-", "—": "-"}
+    for k, v in mapping.items():
+        comment_text = str(comment_text).replace(k, v)
+        
+    if not comment_text.strip():
+        comment_text = "No additional comments provided for this voyage."
+        
+    pdf.multi_cell(190, 8, comment_text)
+
+    # Footer (Sayfanin en altina hizala)
+    if pdf.get_y() > 250:
+        pdf.add_page()
 
     pdf.set_y(260)
     pdf.set_font("Helvetica", "I", 8)
@@ -432,10 +466,10 @@ st.sidebar.markdown(
     """
     <div style='text-align: center; border-top: 1px solid #444; padding-top: 15px;'>
         <p style='font-family: "Courier New", Courier, monospace; font-size: 14px; font-weight: bold; color: #FF0033; letter-spacing: 1px; margin-bottom: 2px;'>
-            ⚡ MarineDeCarb Simulator ⚡
+            ⚡ Chartering Simulator ⚡
         </p>
         <p style='font-style: italic; font-size: 13px; color: #888888; font-family: "Georgia", serif;'>
-            developed by Energy Department
+            Developed by Energy Department
         </p>
     </div>
     """, 

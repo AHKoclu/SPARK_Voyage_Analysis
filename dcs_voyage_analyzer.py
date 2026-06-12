@@ -361,7 +361,7 @@ def generate_voyage_pdf():
         
         fig3, ax3 = plt.subplots(figsize=(10, 4))
         ax3.bar(x_eff_sea - width/2, est_eff_sea, width, label='Estimated', color='#17becf')
-        ax3.bar(x_eff_sea + width/2, act_eff_sea, width, label='Actual', color='#bcbd22')
+        ax3.bar(x_eff_sea + width/2, act_eff_sea, width, label='Actual', color='#cf1746')
         ax3.set_ylabel('MT / NM')
         ax3.set_title('Sea Efficiency (MT/NM)')
         ax3.set_xticks(x_eff_sea)
@@ -379,7 +379,7 @@ def generate_voyage_pdf():
         
         fig4, ax4 = plt.subplots(figsize=(10, 4))
         ax4.bar(x_eff_port - width/2, est_eff_port, width, label='Estimated', color='#17becf')
-        ax4.bar(x_eff_port + width/2, act_eff_port, width, label='Actual', color='#bcbd22')
+        ax4.bar(x_eff_port + width/2, act_eff_port, width, label='Actual', color='#cf1746')
         ax4.set_ylabel('MT / Day')
         ax4.set_title('Port Efficiency (MT/Day)')
         ax4.set_xticks(x_eff_port)
